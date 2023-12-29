@@ -204,6 +204,13 @@ ImPlotStyle::ImPlotStyle() {
     UseLocalTime     = false;
     Use24HourClock   = false;
     UseISO8601       = false;
+
+    AntiAliasedLines = false;
+#ifdef IMPLOT_BACKEND_ENABLED
+    UseGpuAcceleration = true;
+#else
+    UseGpuAcceleration = false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -430,12 +437,16 @@ ImPlotContext* CreateContext() {
     Initialize(ctx);
     if (GImPlot == nullptr)
         SetCurrentContext(ctx);
+    ctx->backendCtx = Backend::CreateContext();
+    Initialize(ctx);
     return ctx;
 }
 
 void DestroyContext(ImPlotContext* ctx) {
-    if (ctx == nullptr)
+    if (ctx == nullptr) {
+        Backend::DestroyContext();
         ctx = GImPlot;
+    }
     if (GImPlot == ctx)
         SetCurrentContext(nullptr);
     IM_DELETE(ctx);
@@ -538,6 +549,7 @@ ImPlotPlot* GetCurrentPlot() {
 void BustPlotCache() {
     ImPlotContext& gp = *GImPlot;
     gp.Plots.Clear();
+    Backend::BustPlotCache();
     gp.Subplots.Clear();
 }
 
@@ -4957,6 +4969,13 @@ void ShowStyleEditor(ImPlotStyle* ref) {
             ImGui::SliderFloat("ErrorBarWeight", &style.ErrorBarWeight, 0.0f, 5.0f, "%.1f");
             ImGui::SliderFloat("DigitalBitHeight", &style.DigitalBitHeight, 0.0f, 20.0f, "%.1f");
             ImGui::SliderFloat("DigitalBitGap", &style.DigitalBitGap, 0.0f, 20.0f, "%.1f");
+            float indent = ImGui::CalcItemWidth() - ImGui::GetFrameHeight();
+            ImGui::Indent(ImGui::CalcItemWidth() - ImGui::GetFrameHeight());
+            ImGui::Checkbox("AntiAliasedLines", &style.AntiAliasedLines);
+#ifdef IMPLOT_BACKEND_ENABLED
+            ImGui::Checkbox("UseGpuAcceleration", &style.UseGpuAcceleration);
+#endif
+            ImGui::Unindent(indent);
             ImGui::Text("Plot Styling");
             ImGui::SliderFloat("PlotBorderSize", &style.PlotBorderSize, 0.0f, 2.0f, "%.0f");
             ImGui::SliderFloat("MinorAlpha", &style.MinorAlpha, 0.0f, 1.0f, "%.2f");
@@ -5431,6 +5450,12 @@ void ShowMetricsWindow(bool* p_popen) {
         }
         ImGui::TreePop();
     }
+#ifdef IMPLOT_BACKEND_ENABLED
+    if (ImGui::TreeNode("Backend")) {
+        ImPlot::Backend::ShowBackendMetrics();
+        ImGui::TreePop();
+    }
+#endif
     ImGui::End();
 }
 

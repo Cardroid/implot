@@ -370,11 +370,11 @@ ImVec4 GetLastItemColor() {
 
 void BustItemCache() {
     ImPlotContext& gp = *GImPlot;
-    Backend::BustItemCache();
     for (int p = 0; p < gp.Plots.GetBufSize(); ++p) {
         ImPlotPlot& plot = *gp.Plots.GetByIndex(p);
         plot.Items.Reset();
     }
+    Backend::BustItemCache();
     for (int p = 0; p < gp.Subplots.GetBufSize(); ++p) {
         ImPlotSubplot& subplot = *gp.Subplots.GetByIndex(p);
         subplot.Items.Reset();
@@ -2448,10 +2448,14 @@ void RenderHeatmap(ImDrawList& draw_list, const T* values, int rows, int cols, d
         ImVec2 bmin = transformer(bounds_min);
         ImVec2 bmax = transformer(bounds_max);
 
+        ImPlotPlot& plot = *gp.CurrentPlot;
+        ImPlotAxis& x = plot.Axes[plot.CurrentX];
+        ImPlotAxis& y = plot.Axes[plot.CurrentY];
+
         Backend::RenderHeatmap(
             gp.CurrentItem->ID, values, ImGuiDataTypeGetter<T>::Value, rows, cols,
             (float)scale_min, (float)scale_max, bmin, bmax, bounds_min, bounds_max,
-            GetCurrentScale(), reverse_y, gp.Style.Colormap, DrawList);
+            x.Scale, y.Scale, reverse_y, gp.Style.Colormap, draw_list);
     }
     else
 #endif

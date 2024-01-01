@@ -1244,12 +1244,13 @@ struct ImPlotContext {
     ImGuiTextBuffer    MousePosStringBuilder;
     ImPlotItemGroup*   SortItems;
 
-    // Backend
-    void* backendCtx;
     // Align plots
     ImPool<ImPlotAlignmentData> AlignmentData;
     ImPlotAlignmentData*        CurrentAlignmentH;
     ImPlotAlignmentData*        CurrentAlignmentV;
+
+    // Backend
+    void* backendCtx;
 };
 
 //-----------------------------------------------------------------------------

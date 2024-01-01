@@ -45,6 +45,7 @@
 // [SECTION] Obsolete API
 
 #pragma once
+#include "define_implot.h"
 #include "imgui.h"
 
 //-----------------------------------------------------------------------------

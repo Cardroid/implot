@@ -434,7 +434,6 @@ void SetImGuiContext(ImGuiContext* ctx) {
 
 ImPlotContext* CreateContext() {
     ImPlotContext* ctx = IM_NEW(ImPlotContext)();
-    Initialize(ctx);
     if (GImPlot == nullptr)
         SetCurrentContext(ctx);
     ctx->backendCtx = Backend::CreateContext();
@@ -443,10 +442,9 @@ ImPlotContext* CreateContext() {
 }
 
 void DestroyContext(ImPlotContext* ctx) {
-    if (ctx == nullptr) {
-        Backend::DestroyContext();
+    Backend::DestroyContext();
+    if (ctx == nullptr)
         ctx = GImPlot;
-    }
     if (GImPlot == ctx)
         SetCurrentContext(nullptr);
     IM_DELETE(ctx);

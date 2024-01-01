@@ -1,3 +1,7 @@
+#include "../define_implot.h"
+
+#if defined(IMPLOT_BACKEND_ENABLE_OPENGL3)
+
 #include "../implot.h"
 #include "../implot_internal.h"
 #include "implot_backend.h"
@@ -295,7 +299,8 @@ void RenderHeatmap(int itemID,
 				   const ImVec2& coords_max,
 				   const ImPlotPoint& bounds_min,
 				   const ImPlotPoint& bounds_max,
-	               ImPlotScale scale,
+	               ImPlotScale scale_x,
+	               ImPlotScale scale_y,
 				   bool reverse_y,
 				   ImPlotColormap cmap,
 				   ImDrawList& DrawList)
@@ -306,8 +311,8 @@ void RenderHeatmap(int itemID,
 	data.ColormapTexID = Context.ColormapIDs[cmap];
 	data.MinValue = scale_min;
 	data.MaxValue = scale_max;
-	data.AxisLogX = scale == ImPlotScale_LogLin || scale == ImPlotScale_LogLog;
-	data.AxisLogY = scale == ImPlotScale_LinLog || scale == ImPlotScale_LogLog;
+	data.AxisLogX = scale_x == ImPlotScale_Log10 || scale_x == ImPlotScale_SymLog;
+	data.AxisLogY = scale_y == ImPlotScale_Log10 || scale_y == ImPlotScale_SymLog;
 	data.MinBounds = bounds_min;
 	data.MaxBounds = bounds_max;
 	data.ShaderProgram = (data_type == ImGuiDataType_Float || data_type == ImGuiDataType_Double ? &Context.ShaderFloat : &Context.ShaderInt);
@@ -366,3 +371,4 @@ void ShowBackendMetrics() {
 
 } // namespace Backend
 } // namespace ImPlot
+#endif

@@ -1,0 +1,2 @@
+#pragma once
+#define IMPLOT_BACKEND_ENABLE_OPENGL3

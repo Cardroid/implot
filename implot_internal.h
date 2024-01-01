@@ -223,6 +223,43 @@ static inline bool ImOverlaps(T min_a, T max_a, T min_b, T max_b) {
     return min_a <= max_b && min_b <= max_a;
 }
 
+// Computes the mel frequency for a given Hz frequency.
+template <typename T>
+static inline T ImMel(T f) { return 2595 * ImLog10(1 + f / 700); }
+
+// Computes the ERB frequency for a given Hz frequency.
+template <typename T>
+static inline T ImErb(T f) { return 21.33228 * ImLog10(1 + 0.00437 * f); }
+
+// Computes the Bark frequency for a given Hz frequency.
+template <typename T>
+static inline T ImBark(T f) {
+    double b = (26.81 * f) / (1960 + f) - 0.53;
+    if (b < 2)
+        b = b + 0.15 * (2 - b);
+    if (b > 20.1)
+        b = b + 0.22 * (b - 20.1);
+    return b;
+}
+
+// Computes the Hz frequency for a given mel frequency.
+template <typename T>
+static inline T ImMelInverse(T m) { return 700 * (ImPow(10, m / 2595) - 1); }
+
+// Computes the Hz frequency for a given ERB frequency.
+template <typename T>
+static inline T ImErbInverse(T erb) { return (ImPow(10, erb / 21.33228) - 1) / 0.00437; }
+
+// Computes the Hz frequency for a given Bark frequency.
+template <typename T>
+static inline T ImBarkInverse(T b) {
+    if (b < 2)
+        b = (b - 0.3) / 0.85;
+    if (b > 20.1)
+        b = (b + 4.422) / 1.22;
+    return 1960 * (b + 0.53) / (26.28 - b);
+}
+
 //-----------------------------------------------------------------------------
 // [SECTION] ImPlot Enums
 //-----------------------------------------------------------------------------
@@ -663,6 +700,7 @@ struct ImPlotAxis
     bool                 Enabled;
     bool                 Vertical;
     bool                 FitThisFrame;
+    bool                 HasScale;
     bool                 HasRange;
     bool                 HasFormatSpec;
     bool                 ShowDefaultTicks;
@@ -672,6 +710,7 @@ struct ImPlotAxis
     ImPlotAxis() {
         ID               = 0;
         Flags            = PreviousFlags = ImPlotAxisFlags_None;
+        Scale            = ImAxisScale_Linear;
         Range.Min        = 0;
         Range.Max        = 1;
         Scale            = ImPlotScale_Linear;
@@ -692,7 +731,7 @@ struct ImPlotAxis
         Formatter        = nullptr;
         FormatterData    = nullptr;
         Locator          = nullptr;
-        Enabled          = Hovered = Held = FitThisFrame = HasRange = HasFormatSpec = false;
+        Enabled          = Hovered = Held = FitThisFrame = HasScale = HasRange = HasFormatSpec = false;
         ShowDefaultTicks = true;
     }
 
@@ -778,6 +817,38 @@ struct ImPlotAxis
             SetRange(Range.Min - 2*delta, Range.Max);
         else
             SetRange(Range.Min - delta, Range.Max + delta);
+    }
+
+    inline void SetScale(ImAxisScale scale)
+    {
+        if (HasScale && scale == Scale)
+            return;
+
+        if (scale == ImAxisScale_Linear) {
+            if (IsTime())
+                ImFlipFlag(Flags, ImPlotAxisFlags_Time);
+            else if (IsLog())
+                ImFlipFlag(Flags, ImPlotAxisFlags_LogScale);
+            else
+                ImFlipFlag(Flags, ImPlotAxisFlags_OtherScale);
+        }
+        else if (scale == ImAxisScale_Log) {
+            if (IsTime())
+                ImFlipFlag(Flags, ImPlotAxisFlags_Time);
+            else
+                ImFlipFlag(Flags, ImPlotAxisFlags_OtherScale);
+            ImFlipFlag(Flags, ImPlotAxisFlags_LogScale);
+        }
+        else {
+            if (IsTime())
+                ImFlipFlag(Flags, ImPlotAxisFlags_Time);
+            else if (IsLog())
+                ImFlipFlag(Flags, ImPlotAxisFlags_LogScale);
+            ImFlipFlag(Flags, ImPlotAxisFlags_OtherScale);
+        }
+
+        Scale = scale;
+        HasScale = true;
     }
 
     inline float PixelSize() const { return ImAbs(PixelMax - PixelMin); }

@@ -841,6 +841,16 @@ void Locator_SymLog(ImPlotTicker& ticker, const ImPlotRange& range, float pixels
     }
 }
 
+void AddTicksPseudolog(const ImPlotRange& range, float pix, bool vertical, ImPlotTickCollection& ticks, ImPlotFormatter formatter, void* data) {
+    static constexpr double cutoff = 4000;
+    if (range.Min < cutoff && range.Max > cutoff) {
+        AddTicksDefault(ImPlotRange{range.Min, cutoff}, pix, vertical, ticks, formatter, data);
+    }
+    if (range.Max > cutoff) {
+        AddTicksDefault(ImPlotRange{cutoff, range.Max}, pix, vertical, ticks, formatter, data);
+    }
+}
+
 void AddTicksCustom(const double* values, const char* const labels[], int n, ImPlotTicker& ticker, ImPlotFormatter formatter, void* data) {
     for (int i = 0; i < n; ++i) {
         if (labels != nullptr)
@@ -2149,6 +2159,20 @@ void SetupAxis(ImAxis idx, const char* label, ImPlotAxisFlags flags) {
     axis.Enabled = true;
     // set label
     plot.SetAxisLabel(axis,label);
+    // set scale from flags if applicable (Lin or Log, and not Time)
+    if (plot.JustCreated || flags != axis.PreviousFlags) {
+        if (!ImHasFlag(flags, ImPlotAxisFlags_Time)) {
+            IM_ASSERT_USER_ERROR(!(ImHasFlag(flags, ImPlotAxisFlags_LogScale) && ImHasFlag(flags, ImPlotAxisFlags_OtherScale)),
+                                "ImPlotAxisFlags_LogScale and ImPlotAxisFlags_OtherScale cannot be enabled at the same time!");
+
+            if (ImHasFlag(flags, ImPlotAxisFlags_LogScale))
+                axis.SetScale(ImAxisScale_Log);
+            else if (ImHasFlag(flags, ImPlotAxisFlags_OtherScale))
+                ; // This is expected to be set by SetupAxisScale
+            else
+                axis.SetScale(ImAxisScale_Linear);
+        }
+    }
     // cache colors
     UpdateAxisColors(axis);
 }
@@ -2301,6 +2325,18 @@ void SetupAxisZoomConstraints(ImAxis idx, double z_min, double z_max) {
     IM_ASSERT_USER_ERROR(axis.Enabled, "Axis is not enabled! Did you forget to call SetupAxis()?");
     axis.ConstraintZoom.Min = z_min;
     axis.ConstraintZoom.Max = z_max;
+}
+
+void SetupAxisScale(ImAxis idx, ImAxisScale scale, ImPlotCond cond)
+{
+    IM_ASSERT_USER_ERROR(GImPlot->CurrentPlot != NULL && !GImPlot->CurrentPlot->SetupLocked,
+                         "Setup needs to be called after BeginPlot and before any setup locking functions (e.g. PlotX)!");    // get plot and axis
+    ImPlotPlot& plot = *GImPlot->CurrentPlot;
+    ImPlotAxis& axis = plot.Axes[idx];
+    IM_ASSERT_USER_ERROR(axis.Enabled, "Axis is not enabled! Did you forget to call SetupAxis()?");
+    if (!plot.Initialized || cond == ImPlotCond_Always)
+        axis.SetScale(scale);
+    axis.ScaleCond = cond;
 }
 
 void SetupAxes(const char* x_label, const char* y_label, ImPlotAxisFlags x_flags, ImPlotAxisFlags y_flags) {
@@ -3740,6 +3776,14 @@ ImPlotRect GetPlotLimits(ImAxis x_idx, ImAxis y_idx) {
     limits.X = x_axis.Range;
     limits.Y = y_axis.Range;
     return limits;
+}
+
+ImAxisScale GetAxisScale(ImAxis axis) {
+    ImPlotContext& gp = *GImPlot;
+    IM_ASSERT_USER_ERROR(gp.CurrentPlot != NULL, "GetAxisScale() needs to be called between BeginPlot() and EndPlot()!");
+    SetupLock();
+    ImPlotPlot& plot = *gp.CurrentPlot;
+    return plot.Axes[axis].Scale;
 }
 
 bool IsPlotHovered() {

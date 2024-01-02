@@ -78,7 +78,6 @@ struct ImPlotContext;             // ImPlot context (opaque struct, see implot_i
 
 // Enums/Flags
 typedef int ImAxis;                   // -> enum ImAxis_
-typedef int ImAxisScale;              // -> enum ImAxisScale_
 typedef int ImPlotFlags;              // -> enum ImPlotFlags_
 typedef int ImPlotAxisFlags;          // -> enum ImPlotAxisFlags_
 typedef int ImPlotSubplotFlags;       // -> enum ImPlotSubplotFlags_
@@ -128,17 +127,6 @@ enum ImAxis_ {
     ImAxis_COUNT
 };
 
-// Axis scales.
-enum ImAxisScale_ {
-    ImAxisScale_Linear = 0,
-    ImAxisScale_Log,
-    ImAxisScale_Mel,
-    ImAxisScale_Erb,
-    ImAxisScale_Bark,
-    // Count
-    ImAxisScale_COUNT
-};
-
 // Options for plots (see BeginPlot).
 enum ImPlotFlags_ {
     ImPlotFlags_None          = 0,       // default
@@ -173,7 +161,6 @@ enum ImPlotAxisFlags_ {
     ImPlotAxisFlags_PanStretch    = 1 << 13, // panning in a locked or constrained state will cause the axis to stretch if possible
     ImPlotAxisFlags_LockMin       = 1 << 14, // the axis minimum value will be locked when panning/zooming
     ImPlotAxisFlags_LockMax       = 1 << 15, // the axis maximum value will be locked when panning/zooming
-    ImPlotAxisFlags_OtherScale    = 1 << 16, // use a different scale than linear or log (specified elsewhere)
     ImPlotAxisFlags_Lock          = ImPlotAxisFlags_LockMin | ImPlotAxisFlags_LockMax,
     ImPlotAxisFlags_NoDecorations = ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels,
     ImPlotAxisFlags_AuxDefault    = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_Opposite
@@ -418,6 +405,9 @@ enum ImPlotScale_ {
     ImPlotScale_Time,       // date/time scale
     ImPlotScale_Log10,      // base 10 logartithmic scale
     ImPlotScale_SymLog,     // symmetric log scale
+    ImPlotScale_Mel,
+    ImPlotScale_Erb,
+    ImPlotScale_Bark,
 };
 
 // Marker specifications.
@@ -995,9 +985,6 @@ IMPLOT_API ImVec2 GetPlotSize();
 IMPLOT_API ImPlotPoint GetPlotMousePos(ImAxis x_axis = IMPLOT_AUTO, ImAxis y_axis = IMPLOT_AUTO);
 // Returns the current plot axis range.
 IMPLOT_API ImPlotRect GetPlotLimits(ImAxis x_axis = IMPLOT_AUTO, ImAxis y_axis = IMPLOT_AUTO);
-
-// Returns the axis scale.
-IMPLOT_API ImAxisScale GetAxisScale(ImAxis axis);
 
 // Returns true if the plot area in the current plot is hovered.
 IMPLOT_API bool IsPlotHovered();

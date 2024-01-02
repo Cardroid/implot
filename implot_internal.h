@@ -700,7 +700,6 @@ struct ImPlotAxis
     bool                 Enabled;
     bool                 Vertical;
     bool                 FitThisFrame;
-    bool                 HasScale;
     bool                 HasRange;
     bool                 HasFormatSpec;
     bool                 ShowDefaultTicks;
@@ -710,7 +709,6 @@ struct ImPlotAxis
     ImPlotAxis() {
         ID               = 0;
         Flags            = PreviousFlags = ImPlotAxisFlags_None;
-        Scale            = ImAxisScale_Linear;
         Range.Min        = 0;
         Range.Max        = 1;
         Scale            = ImPlotScale_Linear;
@@ -731,7 +729,7 @@ struct ImPlotAxis
         Formatter        = nullptr;
         FormatterData    = nullptr;
         Locator          = nullptr;
-        Enabled          = Hovered = Held = FitThisFrame = HasScale = HasRange = HasFormatSpec = false;
+        Enabled          = Hovered = Held = FitThisFrame = HasRange = HasFormatSpec = false;
         ShowDefaultTicks = true;
     }
 
@@ -817,38 +815,6 @@ struct ImPlotAxis
             SetRange(Range.Min - 2*delta, Range.Max);
         else
             SetRange(Range.Min - delta, Range.Max + delta);
-    }
-
-    inline void SetScale(ImAxisScale scale)
-    {
-        if (HasScale && scale == Scale)
-            return;
-
-        if (scale == ImAxisScale_Linear) {
-            if (IsTime())
-                ImFlipFlag(Flags, ImPlotAxisFlags_Time);
-            else if (IsLog())
-                ImFlipFlag(Flags, ImPlotAxisFlags_LogScale);
-            else
-                ImFlipFlag(Flags, ImPlotAxisFlags_OtherScale);
-        }
-        else if (scale == ImAxisScale_Log) {
-            if (IsTime())
-                ImFlipFlag(Flags, ImPlotAxisFlags_Time);
-            else
-                ImFlipFlag(Flags, ImPlotAxisFlags_OtherScale);
-            ImFlipFlag(Flags, ImPlotAxisFlags_LogScale);
-        }
-        else {
-            if (IsTime())
-                ImFlipFlag(Flags, ImPlotAxisFlags_Time);
-            else if (IsLog())
-                ImFlipFlag(Flags, ImPlotAxisFlags_LogScale);
-            ImFlipFlag(Flags, ImPlotAxisFlags_OtherScale);
-        }
-
-        Scale = scale;
-        HasScale = true;
     }
 
     inline float PixelSize() const { return ImAbs(PixelMax - PixelMin); }
@@ -1701,6 +1667,15 @@ static inline double TransformForward_Logit(double v, void*) {
 
 static inline double TransformInverse_Logit(double v, void*) {
     return 1.0 / (1.0 + ImPow(10,-v));
+}
+
+static inline double TransformForward_Mel(double v, void*) {
+    v = v <= 0.0 ? DBL_MIN : v;
+    return ImMel(v);
+}
+
+static inline double TransformInverse_Mel(double v, void*) {
+    return ImMelInverse(v);
 }
 
 //-----------------------------------------------------------------------------

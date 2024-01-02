@@ -182,33 +182,40 @@ float barkInv(float b) {
 
 float convert_scale(int scale, float x, float min_rng, float max_rng)
 {
-    if (scale == 0) // Linear
+    if (scale == 0 || scale == 1) // Linear // TODO Time?
     {
         return x;
     }
     float t;
-    if (scale == 1) // Logarithmic
+    if (scale == 2) // Logarithmic
     {
         float minrl = log10(min_rng);
         float maxrl = log10(max_rng);
 
         t = pow(10, x * (maxrl - minrl) + minrl);
     }
-    else if (scale == 2) // Mel
+    else if (scale == 3) // SymLog
+    {
+        float minrl = 2.0 * asinh(min_rng / 2.0);
+        float maxrl = 2.0 * asinh(max_rng / 2.0);
+
+        t = 2.0 * sinh((x * (maxrl - minrl) + minrl) / 2.0);
+    }
+    else if (scale == 4) // Mel
     {
         float minrl = mel(min_rng);
         float maxrl = mel(max_rng);
 
         t = melInv(x * (maxrl - minrl) + minrl);
     }
-    else if (scale == 3) // ERB
+    else if (scale == 5) // ERB
     {
         float minrl = erb(min_rng);
         float maxrl = erb(max_rng);
 
         t = erbInv(x * (maxrl - minrl) + minrl);
     }
-    else if (scale == 4) // Bark
+    else if (scale == 6) // Bark
     {
         float minrl = bark(min_rng);
         float maxrl = bark(max_rng);
@@ -418,7 +425,7 @@ void RenderHeatmap(int itemID,
 	               ImPlotScale scale_y,
 				   bool reverse_y,
 				   ImPlotColormap cmap,
-				   ImDrawList& DrawList)
+				   ImDrawList& draw_list)
 {
 	ContextData& Context = *((ContextData*)GImPlot->backendCtx);
 	HeatmapData& data = *Context.Heatmaps.GetOrAddByKey(itemID);
@@ -446,12 +453,12 @@ void RenderHeatmap(int itemID,
 	};
 
 	if(Context.ShaderInt.ID == 0 || Context.ShaderFloat.ID == 0)
-		DrawList.AddCallback(CreateHeatmapShader, nullptr);
+		draw_list.AddCallback(CreateHeatmapShader, nullptr);
 
-	DrawList.AddCallback(RenderCallback, (void*)(intptr_t)itemID);
-	DrawList.PrimReserve(6, 4);
-	DrawList.PrimRectUV(coords_min, coords_max, ImVec2(0.0f, reverse_y ? 1.0f : 0.0f), ImVec2(1.0f, reverse_y ? 0.0f : 1.0f), 0);
-	DrawList.AddCallback(ResetState, nullptr);
+	draw_list.AddCallback(RenderCallback, (void*)(intptr_t)itemID);
+	draw_list.PrimReserve(6, 4);
+	draw_list.PrimRectUV(coords_min, coords_max, ImVec2(0.0f, reverse_y ? 1.0f : 0.0f), ImVec2(1.0f, reverse_y ? 0.0f : 1.0f), 0);
+	draw_list.AddCallback(ResetState, nullptr);
 }
 
 void BustPlotCache() {

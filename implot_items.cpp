@@ -2445,20 +2445,7 @@ void RenderHeatmap(ImDrawList& draw_list, const T* values, int rows, int cols, d
 
 #ifdef IMPLOT_BACKEND_HAS_HEATMAP
     if (GImPlot->Style.UseGpuAcceleration) {
-
-        ImPlotPlot& plot = *GetCurrentPlot();
-        ImPlotAxis& x = plot.Axes[plot.CurrentX];
-        ImPlotAxis& y = plot.Axes[plot.CurrentY];
-
-        ImPlotPoint bmc(bounds_min);
-        bmc.x = ImConstrainNan(ImConstrainInf(bmc.x));
-        if (x.IsLog())
-            bmc.x = ImConstrainLog(bmc.x);
-        bmc.y = ImConstrainNan(ImConstrainInf(bmc.y));
-        if (y.IsLog())
-            bmc.y = ImConstrainLog(bmc.y);
-
-        ImVec2 bmin = transformer(bmc);
+        ImVec2 bmin = transformer(bounds_min);
         ImVec2 bmax = transformer(bounds_max);
 
         ImPlotPlot& plot = *gp.CurrentPlot;
